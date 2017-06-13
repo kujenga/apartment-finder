@@ -7,10 +7,15 @@ from dateutil.parser import parse
 from util import post_listing_to_slack, find_points_of_interest
 from slackclient import SlackClient
 import sys
+import os
 import time
 import settings
 
-engine = create_engine('sqlite:///listings.db', echo=False)
+ENGINE_CONN = os.getenv('SQLITE_ENGINE', 'sqlite:///listings.db')
+RESULT_LIMIT = int(os.getenv('RESULT_LIMIT', '50'))
+
+
+engine = create_engine(ENGINE_CONN, echo=False)
 
 Base = declarative_base()
 
@@ -58,7 +63,7 @@ def scrape_area(area):
         })
 
     results = []
-    gen = cl_h.get_results(sort_by='newest', geotagged=True, limit=20)
+    gen = cl_h.get_results(sort_by='newest', geotagged=True, limit=RESULT_LIMIT)
     while True:
         try:
             result = next(gen)
