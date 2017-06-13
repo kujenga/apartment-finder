@@ -1,7 +1,7 @@
 from craigslist import CraigslistHousing
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean  # noqa
 from sqlalchemy.orm import sessionmaker
 from dateutil.parser import parse
 from util import post_listing_to_slack, find_points_of_interest
@@ -12,6 +12,7 @@ import settings
 engine = create_engine('sqlite:///listings.db', echo=False)
 
 Base = declarative_base()
+
 
 class Listing(Base):
     """
@@ -33,19 +34,27 @@ class Listing(Base):
     area = Column(String)
     bart_stop = Column(String)
 
+
 Base.metadata.create_all(engine)
 
 Session = sessionmaker(bind=engine)
 session = Session()
 
+
 def scrape_area(area):
     """
-    Scrapes craigslist for a certain geographic area, and finds the latest listings.
+    Scrapes craigslist for a certain geographic area,
+    and finds the latest listings.
     :param area:
     :return: A list of results.
     """
-    cl_h = CraigslistHousing(site=settings.CRAIGSLIST_SITE, area=area, category=settings.CRAIGSLIST_HOUSING_SECTION,
-                             filters={'max_price': settings.MAX_PRICE, "min_price": settings.MIN_PRICE})
+    cl_h = CraigslistHousing(
+        site=settings.CRAIGSLIST_SITE, area=area,
+        category=settings.CRAIGSLIST_HOUSING_SECTION,
+        filters={
+            'max_price': settings.MAX_PRICE,
+            'min_price': settings.MIN_PRICE,
+        })
 
     results = []
     gen = cl_h.get_results(sort_by='newest', geotagged=True, limit=20)
@@ -61,7 +70,8 @@ def scrape_area(area):
         # Don't store the listing if it already exists.
         if listing is None:
             if result["where"] is None:
-                # If there is no string identifying which neighborhood the result is from, skip it.
+                # If there is no string identifying which neighborhood the
+                # result is from, skip it.
                 continue
 
             lat = 0
@@ -71,8 +81,10 @@ def scrape_area(area):
                 lat = result["geotag"][0]
                 lon = result["geotag"][1]
 
-                # Annotate the result with information about the area it's in and points of interest near it.
-                geo_data = find_points_of_interest(result["geotag"], result["where"])
+                # Annotate the result with information about the area it's in
+                # and points of interest near it.
+                geo_data = find_points_of_interest(
+                    result["geotag"], result["where"])
                 result.update(geo_data)
             else:
                 result["area"] = ""
@@ -103,11 +115,13 @@ def scrape_area(area):
             session.add(listing)
             session.commit()
 
-            # Return the result if it's near a bart station, or if it is in an area we defined.
+            # Return the result if it's near a bart station,
+            # or if it is in an area we defined.
             if len(result["bart"]) > 0 or len(result["area"]) > 0:
                 results.append(result)
 
     return results
+
 
 def do_scrape():
     """
