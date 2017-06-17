@@ -60,6 +60,8 @@ def scrape_area(area):
         filters={
             'max_price': settings.MAX_PRICE,
             'min_price': settings.MIN_PRICE,
+            'min_bedrooms': settings.MIN_BEDROOMS,
+            'max_bedrooms': settings.MAX_BEDROOMS,
         })
 
     results = []
@@ -77,6 +79,7 @@ def scrape_area(area):
 
         # Don't store the listing if it already exists.
         if listing is None:
+            print(result)
             if result["where"] is None:
                 # If there is no string identifying which neighborhood the
                 # result is from, skip it.
